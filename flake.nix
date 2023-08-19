@@ -30,23 +30,23 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    my-modules = {
+    personalModules = {
       url = "git+https://git.server01.lan/r/nixos-modules.git";
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-unstable, deploy-rs, home-manager, sops-nix, nur, disko, my-modules, ... } @ inputs:
+  outputs = { self, nixpkgs, nixpkgs-unstable, deploy-rs, home-manager, sops-nix, nur, disko, personalModules, ... } @ inputs:
     let
       inherit (nixpkgs) lib;
       overlays = lib.flatten [
         nur.overlay
-        my-modules.overlays
-        my-modules.pkgs
+        personalModules.overlays
+        personalModules.pkgs
       ];
-      nixosDeployments = my-modules.utils.deploy.generateNixosDeployments {
+      nixosDeployments = personalModules.utils.deploy.generateNixosDeployments {
         inherit inputs;
-        inherit deploy-rs;
         path = ./systems;
+        ssh-user = "nix";
         sharedModules = [
           { nixpkgs.overlays = overlays; }
           sops-nix.nixosModules.sops
@@ -55,17 +55,7 @@
       };
     in
     {
-      inherit (nixosDeployments) nixosConfigurations deploy;
-
-      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixpkgs-fmt;
-
-      rootPath = ./.;
-      nixosModules = my-modules.nixosModules;
-      nixosRoles = my-modules.nixosRoles;
-
-      checks = builtins.mapAttrs
-        (system: deployLib: deployLib.deployChecks self.deploy)
-        deploy-rs.lib;
-
+      inherit (personalModules) formatter devShells packages nixosModules homeManagerModules nixosRoles;
+      inherit (nixosDeployments) nixosConfigurations deploy checks;
     };
 }
