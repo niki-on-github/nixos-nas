@@ -40,7 +40,7 @@
       inherit (nixpkgs) lib;
       overlays = lib.flatten [
         nur.overlay
-        personalModules.overlays
+        personalModules.overrides
         personalModules.pkgs
       ];
       nixosDeployments = personalModules.utils.deploy.generateNixosDeployments {
@@ -51,6 +51,8 @@
           { nixpkgs.overlays = overlays; }
           sops-nix.nixosModules.sops
           disko.nixosModules.disko
+          home-manager.nixosModules.home-manager
+
         ];
       };
     in
